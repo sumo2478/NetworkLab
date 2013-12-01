@@ -31,12 +31,32 @@ continues on with its execution
 
 # EXERCISE 2A: What conditions did you find and fix that would have
 #    triggered a buffer overrun bug?  (~1-3 sentences each)
+1. If someone requests for a file with a name whose length is larger than
+   FILENAMESIZ then it will cause a buffer overrun bug. A fix for this case
+   is to detect it and then to terminate the request as we will be unable to
+   locate files with names that large. 
+
 
 # EXERCISE 2B: What other robustness problems did you fix?  (~1-3 sentences
 #    each)
+1. Fixed the bug where a peer could try to access a file not in the current
+   directory. Was able to detect this if they put a '/' inside of the file
+   name
+2. There is a bug that occurs when many peers are logged in at once. The
+   reason for this is because when we send a WANT request a bunch of these
+   peers will be returned because they all have the file; however, this will
+   fill up our buffer and will cause an error. 
+3. Fixed the bug where a peer could send us extremely large files by
+   defining a constant MAX_FILE_SIZE equal to 2 GB and terminating the
+   download if the file exceeds this limit.
 
 # EXERCISE 3: Describe the attacks you implemented for "evil mode".  Why
 #    are they attacks?  (~3-10 sentences each)
+1. Our first attack will upload a continuous stream of data to our victim.
+   If they have nothing in place to catch unusually large file sizes then
+   this data will eventually fill up their available memory causing their
+   system to crash.
+2. 
 
 # Extra credit problems
 #Extra credit problem: none

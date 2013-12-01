@@ -37,6 +37,7 @@ static int listen_port;
 
 #define TASKBUFSIZ	4096	// Size of task_t::buf
 #define FILENAMESIZ	256	// Size of task_t::filename
+#define MAX_FILE_SIZE 2147483648 // 2 GB is the maximum file size
 
 typedef enum tasktype {		// Which type of connection is this?
 	TASK_TRACKER,		// => Tracker connection
@@ -289,6 +290,7 @@ static size_t read_tracker_response(task_t *t)
 	t->head = t->tail = 0;
 
 	while (1) {
+
 		// Check for whether buffer is complete.
 		for (; pos+3 < t->tail; pos++)
 			if ((pos == 0 || t->buf[pos-1] == '\n')
@@ -309,6 +311,7 @@ static size_t read_tracker_response(task_t *t)
 		// If not, read more data.  Note that the read will not block
 		// unless NO data is available.
 		int ret = read_to_taskbuf(t->peer_fd, t);
+
 		if (ret == TBUF_ERROR)
 			die("tracker read error");
 		else if (ret == TBUF_END)
@@ -569,6 +572,17 @@ static void task_download(task_t *t, task_t *tracker_task)
 			error("* Disk write error");
 			goto try_again;
 		}
+
+        /**
+         * EXERCISE 2B - Setting restriction on how big of a file we can
+         * download to prevent situations where bad hosts could send us enormous
+         * files
+         */
+        if (t->total_written > MAX_FILE_SIZE)
+        {
+            error("* File exceeded maximum limit. Trying again with another peer");
+            goto try_again;
+        }
 	}
 
 	// Empty files are usually a symptom of some error.
@@ -642,12 +656,35 @@ static void task_upload(task_t *t)
 			break;
 	}
 
+    /*
+     * Exercise 2A - Checking to make sure file name isn't too long
+     */
+    if (strlen(t->buf) > FILENAMESIZ)
+    {
+        error("File name given too large\n");
+        goto exit;
+    }
+
 	assert(t->head == 0);
 	if (osp2p_snscanf(t->buf, t->tail, "GET %s OSP2P\n", t->filename) < 0) {
 		error("* Odd request %.*s\n", t->tail, t->buf);
 		goto exit;
 	}
 	t->head = t->tail = 0;
+
+    /*
+     * Exercise 2B - Check to make sure peer cannot access outside directories
+     * other than the current directory
+     */
+    int i = 0;
+    while (t->filename[i] != '\0' || i >= FILENAMESIZ) {
+        if (t->filename[i] == '/')
+        {
+            error("Peer trying to access invalid directory: %s\n", t->filename);
+            goto exit;
+        }
+        i++;
+    }
 
 	t->disk_fd = open(t->filename, O_RDONLY);
 	if (t->disk_fd == -1) {
@@ -658,19 +695,25 @@ static void task_upload(task_t *t)
 	message("* Transferring file %s\n", t->filename);
 	// Now, read file from disk and write it to the requesting peer.
 	while (1) {
-		int ret = write_from_taskbuf(t->peer_fd, t);
-		if (ret == TBUF_ERROR) {
-			error("* Peer write error");
-			goto exit;
-		}
 
-		ret = read_to_taskbuf(t->disk_fd, t);
-		if (ret == TBUF_ERROR) {
-			error("* Disk read error");
-			goto exit;
-		} else if (ret == TBUF_END && t->head == t->tail)
-			/* End of file */
-			break;
+        if (evil_mode)
+            osp2p_writef(t->peer_fd, "sending infinite data");
+        else
+        {
+            int ret = write_from_taskbuf(t->peer_fd, t);
+            if (ret == TBUF_ERROR) {
+                error("* Peer write error");
+                goto exit;
+            }
+
+            ret = read_to_taskbuf(t->disk_fd, t);
+            if (ret == TBUF_ERROR) {
+                error("* Disk read error");
+                goto exit;
+            } else if (ret == TBUF_END && t->head == t->tail)
+                /* End of file */
+                break;
+        }
 	}
 
 	message("* Upload of %s complete\n", t->filename);

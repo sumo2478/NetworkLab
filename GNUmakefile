@@ -24,7 +24,7 @@ run-good: osppeer
 	@echo + mkdir test
 	@mkdir test
 	@echo + ./osppeer -dtest -t11112 cat1.jpg cat2.jpg cat3.jpg
-	@./osppeer -dtest -t11112 cat1.jpg cat2.jpg cat3.jpg
+	@./osppeer -dtest -b -t11112 cat1.jpg cat2.jpg cat3.jpg
 
 run-slow: osppeer
 	@-/bin/rm -rf test
