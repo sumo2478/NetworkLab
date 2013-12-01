@@ -13,9 +13,9 @@
 # information you'd like us to know, please add it at the end of the file.
 
 # Partner 1
-Name: 
-Student ID: 
-Email: 
+Name: Collin Yen
+Student ID: 804034634
+Email: collinyen7@gmail.com
 
 # Partner 2 (if you're working in a team)
 Name: 
@@ -24,6 +24,10 @@ Email:
 
 # EXERCISE 1: What method you used to make your peer download and upload
 #    files in parallel?  (~1-3 sentences)
+The method used to execute peer download and upload in parallel was forking.
+Everytime we want to upload or download a file we fork the process and have
+the child process do the file upload and download while the parent process
+continues on with its execution
 
 # EXERCISE 2A: What conditions did you find and fix that would have
 #    triggered a buffer overrun bug?  (~1-3 sentences each)

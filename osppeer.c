@@ -758,14 +758,37 @@ int main(int argc, char *argv[])
 	listen_task = start_listen();
 	register_files(tracker_task, myalias);
 
+    /*
+     * Exercise 1 - Parallel Implementation
+     * Used forks to run tasks in parallel
+     */
 	// First, download files named on command line.
+    pid_t pid;
+
 	for (; argc > 1; argc--, argv++)
 		if ((t = start_download(tracker_task, argv[1])))
-			task_download(t, tracker_task);
+        {
+            pid = fork();
+
+            if (pid == 0)
+            {
+			    task_download(t, tracker_task);
+                _exit(0);
+            }else if (pid < 0)
+                error("Fork Process Failed");
+        }
 
 	// Then accept connections from other peers and upload files to them!
 	while ((t = task_listen(listen_task)))
-		task_upload(t);
+    {
+        pid = fork();
 
+        if (pid == 0)
+        {
+            task_upload(t);
+            _exit(0);
+        }else if (pid < 0)
+            error("Fork Process Failed");
+    }
 	return 0;
 }
