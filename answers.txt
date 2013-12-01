@@ -52,11 +52,27 @@ continues on with its execution
 
 # EXERCISE 3: Describe the attacks you implemented for "evil mode".  Why
 #    are they attacks?  (~3-10 sentences each)
-1. Our first attack will upload a continuous stream of data to our victim.
+1. The first attack will upload a continuous stream of data to our victim.
    If they have nothing in place to catch unusually large file sizes then
    this data will eventually fill up their available memory causing their
-   system to crash.
-2. 
+   system to crash. evil_mode = 1
+2. The second attack is to attempt to gain access to a file not in their curent
+   directory. In order to do this we change the filename that we are
+   requesting to something like /etc/passwd and if they have no security
+   precautions in place their code will open the file with that name
+   allowing us access to parts in their memory that are not within their
+   current directory. evil_mode = 2
+3. The third attack is to attempt a buffer overrun with the file name. If done
+   properly this would be able to cause a segmentation fault allowing us to
+   execute code on their system. However, with the case of this lab we just
+   prove that this concept would work and so I did not attempt to pass in
+   malicious code. If evil_mode is set to 3 then we will request a file with
+   a file name length twice the size of the allocated buffer for the file
+   name. evil_mode = 3
+4. The fourth attack that we will attempt will be a DDOS attack. The way
+   this attack will work is that we will flood the peer with requests for a
+   particular file, making it impossible for that peer to accept requests
+   from any other peer. evil_mode = 4
 
 # Extra credit problems
 #Extra credit problem: none
